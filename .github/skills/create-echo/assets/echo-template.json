@@ -1,0 +1,10 @@
+{
+  "id": "echo-<slug>-001",
+  "author": "your name or anonymous",
+  "type": "message",
+  "content": {
+    "text": "Your message here."
+  },
+  "island": "origin",
+  "position": { "x": 2500, "y": 1900 }
+}

@@ -1,8 +1,6 @@
-# Como contribuir com um Eco / How to contribute an Echo
+# How to contribute an Echo
 
-## O que é um Eco?
-
-Um Eco é um fragmento de presença que você deixa no mundo de Sōra. Pode ser uma mensagem, uma memória, uma cor, um som — qualquer coisa que pareça verdadeira para você.
+## What is an Echo?
 
 *An Echo is a fragment of presence you leave in the world of Sōra. It can be a message, a memory, a color, a sound — anything that feels true to you.*
 
@@ -10,8 +8,8 @@ Um Eco é um fragmento de presença que você deixa no mundo de Sōra. Pode ser 
 
 ```json
 {
-  "id": "echo-seu-nome-001",
-  "author": "seu nome ou anônimo",
+  "id": "echo-your-name-001",
+  "author": "your name or anonymous",
   "type": "sound | visual | message",
   "content": {},
   "island": "origin | forest | ruins | cloud",
@@ -19,15 +17,15 @@ Um Eco é um fragmento de presença que você deixa no mundo de Sōra. Pode ser 
 }
 ```
 
-- `position.x` e `position.y` são valores entre 0 e 1 (proporção da tela)
-- `island` indica qual ilha o eco habita (por enquanto todos aparecem na mesma cena)
-- `author` pode ser qualquer nome ou "anônimo"
+- `position.x` and `position.y` are values between 0 and 1 (screen proportion)
+- `island` indicates which island the echo inhabits (for now all appear in the same scene)
+- `author` can be any name or "anonymous"
 
-## Como enviar
+## How to submit
 
-1. Faça um fork do repositório
-2. Crie um arquivo `community/echos/echo-seu-nome-001.json`
-3. Preencha com seu eco
-4. Abra um Pull Request com o título: `eco: seu-nome`
+1. Fork the repository
+2. Create a file `community/echos/echo-your-name-001.json`
+3. Fill it with your echo
+4. Open a Pull Request with the title: `echo: your-name`
 
-Não é necessário saber programar. O arquivo JSON é suficiente.
+No programming knowledge is required. The JSON file is enough.

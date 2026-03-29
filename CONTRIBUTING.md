@@ -1,34 +1,32 @@
-# Contribuindo com Sōra / Contributing to Sōra
+# Contributing to Sōra
 
-## Filosofia
-
-Sōra é construído colaborativamente. Não há julgamento de valor sobre os ecos: qualquer personalidade, crença ou perspectiva é bem-vinda, desde que não cause dano a ninguém.
+## Philosophy
 
 *Sōra is built collaboratively. There is no value judgment on echoes: any personality, belief, or perspective is welcome, as long as it causes no harm to anyone.*
 
 ---
 
-## O que é um Eco?
+## What is an Echo?
 
-Um Eco é um fragmento de presença que alguém deixou no mundo. Quando o jogador se aproxima, ele aparece suavemente — um nome, uma frase, uma cor, um som. Não é uma conquista nem uma missão. É apenas alguém que esteve aqui.
-
----
-
-## Como criar um Eco
-
-Veja o guia em [`community/echos/README.md`](community/echos/README.md).
+An Echo is a fragment of presence someone left in the world. When the player approaches, it appears softly — a name, a phrase, a color, a sound. It is not an achievement or a quest. It is just someone who was here.
 
 ---
 
-## Contribuindo com código
+## How to create an Echo
 
-1. `npm install && npm run dev` para rodar localmente
-2. Abra um issue antes de PRs maiores
-3. Código comentado em inglês, por favor
-4. PRs pequenos e focados são mais fáceis de revisar
+See the guide in [`community/echos/README.md`](community/echos/README.md).
 
 ---
 
-## Dúvidas?
+## Contributing code
 
-Abra uma [Discussion](../../discussions) no GitHub.
+1. `npm install && npm run dev` to run locally
+2. Open an issue before larger PRs
+3. Please comment code in English
+4. Small, focused PRs are easier to review
+
+---
+
+## Questions?
+
+Open a [Discussion](../../discussions) on GitHub.

@@ -1,0 +1,10 @@
+{
+    "go.goroot": "/Users/lucas.rodrigues/.local/share/mise/installs/go/1.26.1",
+    "debug.javascript.defaultRuntimeExecutable": {
+        "pwa-node": "/Users/lucas.rodrigues/.local/share/mise/shims/node"
+    },
+    "go.alternateTools": {
+        "go": "/Users/lucas.rodrigues/.local/share/mise/shims/go",
+        "gopls": "/Users/lucas.rodrigues/.local/share/mise/shims/gopls"
+    }
+}

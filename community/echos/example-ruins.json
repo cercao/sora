@@ -1,0 +1,10 @@
+{
+  "id": "echo-ruins-001",
+  "author": "old traveler",
+  "type": "message",
+  "content": {
+    "text": "These stones were placed by hands that no longer exist. Yet here they stand."
+  },
+  "island": "ruins",
+  "position": { "x": 3860, "y": 2040 }
+}

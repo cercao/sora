@@ -1,0 +1,12 @@
+{
+  "id": "echo-color-001",
+  "author": "Keiko",
+  "type": "sound",
+  "content": {
+    "frequency": 432,
+    "duration": 2.5,
+    "note": "A chord I learned when I was seven years old."
+  },
+  "island": "cloud",
+  "position": { "x": 3660, "y": 560 }
+}

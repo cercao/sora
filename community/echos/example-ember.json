@@ -1,0 +1,11 @@
+{
+  "id": "echo-ember-001",
+  "author": "M.",
+  "type": "visual",
+  "content": {
+    "color": "#ff6020",
+    "note": "I used to be afraid of fire. Now it just feels like energy waiting to go somewhere."
+  },
+  "island": "ember",
+  "position": { "x": 720, "y": 2250 }
+}

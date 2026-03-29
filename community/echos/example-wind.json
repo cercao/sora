@@ -1,0 +1,10 @@
+{
+  "id": "echo-wind-001",
+  "author": "northern wind",
+  "type": "message",
+  "content": {
+    "text": "Sometimes the best path is the one the air chooses for you."
+  },
+  "island": "origin",
+  "position": { "x": 2420, "y": 1840 }
+}

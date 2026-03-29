@@ -1,0 +1,19 @@
+{
+  "name": "sora-game",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && cp -r community dist/",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.80.1",
+    "tone": "^14.7.77"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  }
+}

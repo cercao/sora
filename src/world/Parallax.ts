@@ -23,16 +23,88 @@ export class Parallax {
   private drawSky(t: number): void {
     const { width, height } = this.scene.scale;
     this.sky.clear();
-    // Night to dawn to day gradient
-    const r = Math.floor(Phaser.Math.Linear(8, 140, t));
-    const g = Math.floor(Phaser.Math.Linear(8, 180, t));
-    const b = Math.floor(Phaser.Math.Linear(22, 240, t));
-    this.sky.fillStyle(Phaser.Display.Color.GetColor(r, g, b), 1);
+
+    // Sky color keyframes: [progress, r, g, b]
+    // Full cycle: night → pre-dawn → sunrise → day → sunset → dusk → night
+    const skyPhases: Array<[number, number, number, number]> = [
+      [0.00,   8,  10,  22], // night
+      [0.22,   8,  10,  22], // night hold
+      [0.30,  40,  18,  55], // pre-dawn (deep violet)
+      [0.40, 210,  95,  55], // sunrise (warm orange-pink)
+      [0.50, 140, 180, 240], // day (sky blue)
+      [0.62, 140, 180, 240], // day hold
+      [0.72, 215,  88,  38], // sunset (orange-red)
+      [0.82,  28,  14,  30], // dusk (deep violet)
+      [1.00,   8,  10,  22], // night again
+    ];
+
+    // Horizon glow keyframes: [progress, r, g, b, alpha]
+    const glowPhases: Array<[number, number, number, number, number]> = [
+      [0.00, 255, 100,  60, 0.00],
+      [0.25, 255, 100,  60, 0.00],
+      [0.33, 255,  80,  30, 0.22],
+      [0.42, 255, 140,  80, 0.42],
+      [0.50, 255, 160, 100, 0.10],
+      [0.62, 255, 160, 100, 0.08],
+      [0.72, 255,  75,  25, 0.42],
+      [0.82, 200,  40,  20, 0.18],
+      [1.00, 255, 100,  60, 0.00],
+    ];
+
+    const sky = this.lerpPhases(skyPhases, t);
+    this.sky.fillStyle(Phaser.Display.Color.GetColor(sky.r, sky.g, sky.b), 1);
     this.sky.fillRect(0, 0, width, height);
 
-    // Soft horizon glow
-    this.sky.fillStyle(0xffa060, Math.sin(t * Math.PI) * 0.18);
-    this.sky.fillEllipse(width / 2, height * 0.55, width * 1.2, height * 0.5);
+    const glow = this.lerpGlowPhases(glowPhases, t);
+    if (glow.a > 0.01) {
+      this.sky.fillStyle(Phaser.Display.Color.GetColor(glow.r, glow.g, glow.b), glow.a);
+      this.sky.fillEllipse(width / 2, height * 0.62, width * 1.2, height * 0.55);
+    }
+  }
+
+  // Smoothstep interpolation through color keyframes [t, r, g, b]
+  private lerpPhases(
+    phases: Array<[number, number, number, number]>,
+    t: number,
+  ): { r: number; g: number; b: number } {
+    for (let i = 0; i < phases.length - 1; i++) {
+      const [t0, r0, g0, b0] = phases[i];
+      const [t1, r1, g1, b1] = phases[i + 1];
+      if (t >= t0 && t <= t1) {
+        const f = (t - t0) / (t1 - t0);
+        const s = f * f * (3 - 2 * f); // smoothstep
+        return {
+          r: Math.round(r0 + (r1 - r0) * s),
+          g: Math.round(g0 + (g1 - g0) * s),
+          b: Math.round(b0 + (b1 - b0) * s),
+        };
+      }
+    }
+    const last = phases[phases.length - 1];
+    return { r: last[1], g: last[2], b: last[3] };
+  }
+
+  // Smoothstep interpolation through glow keyframes [t, r, g, b, alpha]
+  private lerpGlowPhases(
+    phases: Array<[number, number, number, number, number]>,
+    t: number,
+  ): { r: number; g: number; b: number; a: number } {
+    for (let i = 0; i < phases.length - 1; i++) {
+      const [t0, r0, g0, b0, a0] = phases[i];
+      const [t1, r1, g1, b1, a1] = phases[i + 1];
+      if (t >= t0 && t <= t1) {
+        const f = (t - t0) / (t1 - t0);
+        const s = f * f * (3 - 2 * f);
+        return {
+          r: Math.round(r0 + (r1 - r0) * s),
+          g: Math.round(g0 + (g1 - g0) * s),
+          b: Math.round(b0 + (b1 - b0) * s),
+          a: a0 + (a1 - a0) * s,
+        };
+      }
+    }
+    const last = phases[phases.length - 1];
+    return { r: last[1], g: last[2], b: last[3], a: last[4] };
   }
 
   private createDistantMountains(): void {

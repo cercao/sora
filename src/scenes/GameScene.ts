@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { Spirit } from '../systems/Spirit';
 import { FlightPhysics } from '../systems/FlightPhysics';
-import { EchoSystem, ECHO_FILES } from '../systems/EchoSystem';
+import { EchoSystem, ECHO_FILES, EchoData } from '../systems/EchoSystem';
 import { AmbientSound } from '../systems/AmbientSound';
 import { Island } from '../world/Island';
 import { Parallax } from '../world/Parallax';
@@ -289,6 +289,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private buildCompletionUI(width: number, height: number): void {
+    // Hide the biome counter HUD — echo cards now fill that role
+    this.echoSystem.hideHUD();
+
     // Starfield — tiny particles drifting
     for (let i = 0; i < 40; i++) {
       const g = this.add.graphics().setDepth(301).setScrollFactor(0);
@@ -305,29 +308,20 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Title
-    const title = this.add.text(width / 2, height / 2 - 120, 'The wind remembers.', {
+    const title = this.add.text(width / 2, height / 2 - 50, 'The wind remembers.', {
       fontSize: '32px',
       color: '#c8dff0',
       fontFamily: 'Cinzel, serif',
     }).setOrigin(0.5).setDepth(302).setScrollFactor(0).setAlpha(0);
 
-    // Biome list
-    const biomeTexts: Phaser.GameObjects.Text[] = this.activeBiomes.map((b, i) =>
-      this.add.text(width / 2, height / 2 - 50 + i * 30, `✦  ${b.name}`, {
-        fontSize: '16px',
-        color: '#' + b.accentColor.toString(16).padStart(6, '0'),
-        fontFamily: 'Cinzel, serif',
-      }).setOrigin(0.5).setDepth(302).setScrollFactor(0).setAlpha(0),
-    );
-
-    const sub = this.add.text(width / 2, height / 2 + 115, 'Every echo you found was left by a real person.', {
+    const sub = this.add.text(width / 2, height / 2 + 8, 'Every echo you found was left by a real person.', {
       fontSize: '14px',
       color: '#506070',
       fontFamily: 'Philosopher, Georgia, serif',
     }).setOrigin(0.5).setDepth(302).setScrollFactor(0).setAlpha(0);
 
     // Restart button
-    const restart = this.add.text(width / 2, height / 2 + 160, 'fly again', {
+    const restart = this.add.text(width / 2, height / 2 + 56, 'fly again', {
       fontSize: '18px',
       color: '#607888',
       fontFamily: 'Cinzel, serif',
@@ -337,12 +331,91 @@ export class GameScene extends Phaser.Scene {
     restart.on('pointerout',  () => restart.setStyle({ color: '#607888' }));
     restart.on('pointerdown', () => this.scene.restart());
 
-    // Staggered fade-in
-    this.tweens.add({ targets: title,   alpha: 1, duration: 1200, delay: 200,  ease: 'Sine.easeOut' });
-    biomeTexts.forEach((t, i) => {
-      this.tweens.add({ targets: t, alpha: 0.85, duration: 800, delay: 900 + i * 180, ease: 'Sine.easeOut' });
+    // Echo cards — split evenly between left and right columns
+    const discovered = this.echoSystem.getDiscoveredEchoes();
+    const half = Math.ceil(discovered.length / 2);
+    const leftEchoes  = discovered.slice(0, half);
+    const rightEchoes = discovered.slice(half);
+
+    const cardH   = 130;
+    const cardGap = 14;
+    const step    = cardH + cardGap;
+
+    const leftStartY  = Math.max(20, (height - (leftEchoes.length  * step - cardGap)) / 2);
+    const rightStartY = Math.max(20, (height - (rightEchoes.length * step - cardGap)) / 2);
+
+    leftEchoes.forEach((echo, i) => {
+      this.buildCompletionEchoCard(echo, false, leftStartY + i * step, 800 + i * 140);
     });
-    this.tweens.add({ targets: sub,     alpha: 1, duration: 1000, delay: 1800, ease: 'Sine.easeOut' });
-    this.tweens.add({ targets: restart, alpha: 1, duration: 800,  delay: 2400, ease: 'Sine.easeOut' });
+    rightEchoes.forEach((echo, i) => {
+      this.buildCompletionEchoCard(echo, true,  rightStartY + i * step, 800 + i * 140);
+    });
+
+    // Staggered fade-in for centre elements
+    this.tweens.add({ targets: title,   alpha: 1, duration: 1200, delay: 200,  ease: 'Sine.easeOut' });
+    this.tweens.add({ targets: sub,     alpha: 1, duration: 1000, delay: 1000, ease: 'Sine.easeOut' });
+    this.tweens.add({ targets: restart, alpha: 1, duration: 800,  delay: 1600, ease: 'Sine.easeOut' });
+  }
+
+  private buildCompletionEchoCard(
+    echo: EchoData,
+    fromRight: boolean,
+    yPos: number,
+    delay: number,
+  ): void {
+    const { width } = this.scale;
+    const panelW  = 248;
+    const panelH  = 130;
+    const margin  = 18;
+    const biome      = this.activeBiomes.find(b => b.id === echo.island);
+    const accentColor = biome?.accentColor ?? 0xffd080;
+    const accentHex   = '#' + accentColor.toString(16).padStart(6, '0');
+
+    // Slide in from the respective off-screen edge
+    const finalX  = fromRight ? width - margin - panelW : margin;
+    const startX  = fromRight ? width + 20              : -panelW - 20;
+    const panel   = this.add.container(startX, yPos).setDepth(302).setScrollFactor(0).setAlpha(0);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0x08101a, 0.90);
+    bg.fillRoundedRect(0, 0, panelW, panelH, 8);
+    bg.lineStyle(1, accentColor, 0.45);
+    bg.strokeRoundedRect(0, 0, panelW, panelH, 8);
+
+    const bar = this.add.graphics();
+    bar.fillStyle(accentColor, 0.8);
+    bar.fillRect(0, 0, 3, panelH);
+
+    const typeLabel  = this.add.text(14, 10, `echo · ${echo.type}`, {
+      fontSize: '11px', color: accentHex, fontFamily: 'Cinzel, serif',
+    });
+    const authorText = this.add.text(14, 26, echo.author, {
+      fontSize: '17px', color: '#e8e0d4', fontFamily: 'Cinzel, serif',
+    });
+
+    const contentStr = typeof echo.content.text === 'string'
+      ? echo.content.text
+      : typeof echo.content.note === 'string'
+        ? echo.content.note
+        : `${echo.type} fragment`;
+
+    const contentText = this.add.text(14, 52, contentStr, {
+      fontSize: '12px', color: '#a0b0c0', fontFamily: 'Philosopher, Georgia, serif',
+      wordWrap: { width: panelW - 28 },
+    });
+    const biomeLabel = this.add.text(14, panelH - 18, biome?.name ?? '', {
+      fontSize: '11px', color: '#506070', fontFamily: 'Cinzel, serif',
+    });
+
+    panel.add([bg, bar, typeLabel, authorText, contentText, biomeLabel]);
+
+    this.tweens.add({
+      targets: panel,
+      x: finalX,
+      alpha: 1,
+      duration: 650,
+      delay,
+      ease: 'Back.easeOut',
+    });
   }
 }

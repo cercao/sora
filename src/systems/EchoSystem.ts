@@ -173,6 +173,10 @@ export class EchoSystem {
       const cx = biome?.wx ?? this.worldWidth / 2;
       const cy = biome?.wy ?? this.worldHeight / 2;
 
+      // Surface Y is the top of the island, where the echo should rest visually.
+      const surfaceY = cy - (biome?.islandHeight ?? 0) * 0.2;
+      const islandHalfWidth = (biome?.islandWidth ?? 200) * 0.4;
+
       let scatter = ECHO_SCATTER;
       let pos: { x: number; y: number } | null = null;
 
@@ -180,10 +184,11 @@ export class EchoSystem {
         // Expand search radius every 30 failed attempts.
         if (attempt > 0 && attempt % 30 === 0) scatter *= 1.6;
 
-        const angle = Math.random() * Math.PI * 2;
-        const r = Math.random() * scatter;
-        const x = Phaser.Math.Clamp(cx + Math.cos(angle) * r, margin, this.worldWidth - margin);
-        const y = Phaser.Math.Clamp(cy + Math.sin(angle) * r, margin, this.worldHeight - margin);
+        // Scatter only horizontally; Y stays near the island surface.
+        const xOffset = (Math.random() * 2 - 1) * Math.max(islandHalfWidth, scatter * 0.5);
+        const yOffset = (Math.random() * 2 - 1) * 18;
+        const x = Phaser.Math.Clamp(cx + xOffset, margin, this.worldWidth - margin);
+        const y = Phaser.Math.Clamp(surfaceY + yOffset, margin, this.worldHeight - margin);
 
         const clearOfOthers = placed.every(
           p => Math.hypot(p.x - x, p.y - y) >= MIN_ECHO_DISTANCE,
@@ -212,7 +217,16 @@ export class EchoSystem {
     const biome = this.biomes.find(b => b.id === echo.island);
     const color = biome?.accentColor ?? 0xffd080;
 
-    const container = this.scene.add.container(echo.position.x, echo.position.y).setDepth(6);
+    // Hover a random distance above the island surface
+    const hoverOffset = 25 + Math.random() * 20;
+    const container = this.scene.add.container(echo.position.x, echo.position.y - hoverOffset).setDepth(6);
+
+    // Beacon inside container using local coordinates (extends upward from origin)
+    const beacon = this.scene.add.graphics();
+    beacon.fillStyle(color, 0.07);
+    beacon.fillRect(-1.5, -260, 3, 260);
+    beacon.fillStyle(color, 0.04);
+    beacon.fillRect(-4, -260, 8, 260);
 
     // Pulsing ring
     const ring = this.scene.add.graphics();
@@ -226,14 +240,10 @@ export class EchoSystem {
     pulse.lineStyle(1, color, 0.3);
     pulse.strokeCircle(0, 0, 16);
 
-    container.add([ring, pulse]);
+    container.add([beacon, ring, pulse]);
+    this.echoMarkers.set(echo.id, container);
 
-    // Beacon — vertical light shaft visible from a distance
-    const beacon = this.scene.add.graphics().setDepth(5);
-    beacon.fillStyle(color, 0.07);
-    beacon.fillRect(echo.position.x - 1.5, echo.position.y - 280, 3, 280);
-    beacon.fillStyle(color, 0.04);
-    beacon.fillRect(echo.position.x - 4, echo.position.y - 280, 8, 280);
+    // Beacon shimmer
     this.scene.tweens.add({
       targets: beacon,
       alpha: { from: 0.4, to: 0.9 },
@@ -242,12 +252,8 @@ export class EchoSystem {
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
-    // Store beacon ref so we can destroy it on discovery
-    (container as Phaser.GameObjects.Container & { beacon?: Phaser.GameObjects.Graphics }).beacon = beacon;
 
-    this.echoMarkers.set(echo.id, container);
-
-    // Pulse animation
+    // Outer pulse ring expansion
     this.scene.tweens.add({
       targets: pulse,
       scaleX: 2.2,
@@ -256,6 +262,30 @@ export class EchoSystem {
       duration: 2200,
       repeat: -1,
       ease: 'Sine.easeOut',
+    });
+
+    // Gentle vertical levitation
+    const floatHeight = 7 + Math.random() * 6;
+    this.scene.tweens.add({
+      targets: container,
+      y: container.y - floatHeight,
+      duration: 2200 + Math.random() * 1200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+      delay: Math.random() * 600,
+    });
+
+    // Subtle horizontal drift
+    const driftX = (Math.random() - 0.5) * 10;
+    this.scene.tweens.add({
+      targets: container,
+      x: container.x + driftX,
+      duration: 3000 + Math.random() * 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+      delay: Math.random() * 1200,
     });
   }
 
@@ -301,8 +331,6 @@ export class EchoSystem {
         duration: 1000,
         ease: 'Sine.easeOut',
         onComplete: () => {
-          const c = marker as Phaser.GameObjects.Container & { beacon?: Phaser.GameObjects.Graphics };
-          c.beacon?.destroy();
           marker.destroy();
           this.echoMarkers.delete(echo.id);
         },
@@ -474,4 +502,12 @@ export class EchoSystem {
 
   getDiscoveredCount(): number { return this.discovered.size; }
   getTotalCount(): number { return this.echos.length; }
+
+  public getDiscoveredEchoes(): EchoData[] {
+    return this.echos.filter(e => this.discovered.has(e.id));
+  }
+
+  public hideHUD(): void {
+    this.hudContainer.setVisible(false);
+  }
 }

@@ -12,14 +12,13 @@
   "author": "your name or anonymous",
   "type": "sound | visual | message",
   "content": {},
-  "island": "origin | forest | ruins | cloud",
-  "position": { "x": 0.5, "y": 0.3 }
+  "island": "origin | canopy | ruins | cloud | ember"
 }
 ```
 
-- `position.x` and `position.y` are values between 0 and 1 (screen proportion)
-- `island` indicates which island the echo inhabits (for now all appear in the same scene)
+- `island` indicates which island's neighbourhood the echo will appear near
 - `author` can be any name or "anonymous"
+- **Position is assigned automatically** each time the game starts — no need to set it manually
 
 ## How to submit
 

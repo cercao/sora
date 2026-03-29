@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 import { Spirit } from '../systems/Spirit';
 import { FlightPhysics } from '../systems/FlightPhysics';
-import { EchoSystem } from '../systems/EchoSystem';
+import { EchoSystem, ECHO_FILES } from '../systems/EchoSystem';
 import { AmbientSound } from '../systems/AmbientSound';
 import { Island } from '../world/Island';
 import { Parallax } from '../world/Parallax';
-import { WORLD_WIDTH, WORLD_HEIGHT, BIOMES } from '../world/WorldConfig';
+import { BiomeDefinition, computeWorldSize, getBiomes } from '../world/WorldConfig';
 
 export class GameScene extends Phaser.Scene {
   private spirit!: Spirit;
@@ -13,6 +13,8 @@ export class GameScene extends Phaser.Scene {
   private echoSystem!: EchoSystem;
   private ambientSound!: AmbientSound;
   private parallax!: Parallax;
+  private worldHeight!: number;
+  private activeBiomes!: BiomeDefinition[];
 
   // HUD elements (scrollFactor 0)
   private altitudeBar!: Phaser.GameObjects.Graphics;
@@ -26,19 +28,24 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // ── Compute world size from echo count ───────────────
+    const { width: worldW, height: worldH } = computeWorldSize(ECHO_FILES.length);
+    this.worldHeight = worldH;
+    this.activeBiomes = getBiomes(worldW, worldH);
+
     // ── World bounds ────────────────────────────────────
-    this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-    this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+    this.physics.world.setBounds(0, 0, worldW, worldH);
+    this.cameras.main.setBounds(0, 0, worldW, worldH);
 
     // ── Background layers (parallax via scroll factors) ──
     this.parallax = new Parallax(this);
 
     // ── Islands / biomes ─────────────────────────────────
-    new Island(this, BIOMES);
+    new Island(this, this.activeBiomes);
 
     // ── Spirit (player) ──────────────────────────────────
     // Start at origin biome
-    const origin = BIOMES.find(b => b.id === 'origin')!;
+    const origin = this.activeBiomes.find(b => b.id === 'origin')!;
     this.spirit = new Spirit(this, origin.wx, origin.wy - 120);
 
     // ── Camera follows spirit with lookahead ─────────────
@@ -47,7 +54,7 @@ export class GameScene extends Phaser.Scene {
     // ── Systems ──────────────────────────────────────────
     this.ambientSound = new AmbientSound(this);
     this.flight = new FlightPhysics(this, this.spirit);
-    this.echoSystem = new EchoSystem(this, this.spirit, this.ambientSound);
+    this.echoSystem = new EchoSystem(this, this.spirit, this.ambientSound, worldW, worldH, this.activeBiomes);
     this.echoSystem.onGameComplete = () => this.showCompletionScreen();
 
     // ── HUD (fixed to screen) ────────────────────────────
@@ -111,7 +118,7 @@ export class GameScene extends Phaser.Scene {
 
   private updateAltitudeHUD(): void {
     const { height } = this.scale;
-    const ratio = 1 - this.spirit.y / WORLD_HEIGHT;
+    const ratio = 1 - this.spirit.y / this.worldHeight;
     const barH = Math.max(4, ratio * height * 0.7);
     const barY = height * 0.15 + height * 0.7;
 
@@ -128,9 +135,9 @@ export class GameScene extends Phaser.Scene {
 
   private updateBiomeLabel(): void {
     // Find the nearest biome
-    let nearest = BIOMES[0];
+    let nearest = this.activeBiomes[0];
     let minDist = Infinity;
-    for (const b of BIOMES) {
+    for (const b of this.activeBiomes) {
       const d = Phaser.Math.Distance.Between(this.spirit.x, this.spirit.y, b.wx, b.wy);
       if (d < minDist) { minDist = d; nearest = b; }
     }
@@ -240,7 +247,8 @@ export class GameScene extends Phaser.Scene {
       '',
       '1. Fork the repository on GitHub',
       '2. Create community/echos/echo-yourname-001.json',
-      '3. Fill in: author, type, content, island, position',
+      '3. Fill in: author, type, content, island',
+      '   (position is assigned automatically)',
       '4. Open a Pull Request',
       '',
       'No coding required. Just a JSON file.',
@@ -304,7 +312,7 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(302).setScrollFactor(0).setAlpha(0);
 
     // Biome list
-    const biomeTexts: Phaser.GameObjects.Text[] = BIOMES.map((b, i) =>
+    const biomeTexts: Phaser.GameObjects.Text[] = this.activeBiomes.map((b, i) =>
       this.add.text(width / 2, height / 2 - 50 + i * 30, `✦  ${b.name}`, {
         fontSize: '16px',
         color: '#' + b.accentColor.toString(16).padStart(6, '0'),
